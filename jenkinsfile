@@ -1,30 +1,74 @@
 pipeline {
     agent any
 
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
     environment {
         AWS_DEFAULT_REGION = 'eu-west-2'
-        TF_IN_AUTOMATION   = 'true'
+        TF_IN_AUTOMATION = 'true'
+        TF_INPUT = 'false'
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/Newest-IT-Bro/Jenkins-S3.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
-                sh 'terraform init'
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',  credentialsId: 'aws-jenkins-creds']])
+                  {
+                    sh '''
+                        set -e
+                        terraform init -input=false
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',  credentialsId: 'aws-jenkins-creds']])
+                 {
+                    sh '''
+                        set -e
+                        terraform validate
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',  credentialsId: 'aws-jenkins-creds']])
+                {
+                    sh '''
+                        set -e
+                        terraform plan -input=false -out=tfplan
+                    '''
+                }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh '''
-                    terraform plan -out=tfplan
-                    terraform apply -auto-approve tfplan
-                '''
+               withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',  credentialsId: 'aws-jenkins-creds']])
+                {
+                    sh '''
+                        set -e
+                        terraform apply -input=false -auto-approve tfplan
+                    '''
+                }
             }
         }
 
@@ -42,13 +86,30 @@ pipeline {
                             )
                         ]
                     )
+
                     if (destroyChoice == 'yes') {
-                        sh 'terraform destroy -auto-approve'
+                        withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',  credentialsId: 'aws-jenkins-creds']])
+                      {
+                            sh '''
+                                set -e
+                                terraform destroy -input=false -auto-approve
+                            '''
+                        }
                     } else {
-                        echo "Skipping destroy"
+                        echo 'Skipping destroy'
                     }
                 }
             }
         }
     }
+
+    post {
+    success {
+        echo 'Congrats, you have successfully completed the pipeline!'
+    }
+    always {
+        echo 'Pipeline finished.'
+    }
+  }
 }
