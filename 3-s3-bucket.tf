@@ -43,34 +43,38 @@ resource "aws_s3_bucket_lifecycle_configuration" "public_jenkins_lifecycle" {
 }
 
 
-resource "aws_s3_object" "Armageddon-readme" {
+resource "aws_s3_object" "Armageddon" {
   bucket = aws_s3_bucket.public_jenkins_bucket.id
-  key    = "Armageddon-readme.md"
-  source = "${path.module}/Armageddon-readme.md"
+  key    = "Armageddon.md"
+  source = "${path.module}/Armageddon.md"
   content_type = "text/markdown"
-  tags   = filemd5("${path.module}/Armageddon-readme.md")
+
+  etag   = filemd5("${path.module}/Armageddon.md")
 }
 
 resource "aws_s3_object" "extension" {
   bucket = aws_s3_bucket.public_jenkins_bucket.id
-  key    = "files/screenshots/extension.png"
+  key    = "extension.png"
   source = "${path.module}/screenshots/extension.png"
   content_type = "image/png"
-  tags   = filemd5("${path.module}/screenshots/extension.png")
+
+  etag   = filemd5("${path.module}/screenshots/extension.png")
 }
 
-resource "aws_s3_object" "tempproceed" {
+resource "aws_s3_object" "webhook" {
   bucket = aws_s3_bucket.public_jenkins_bucket.id
-  key    = "files/screenshots/tempproceed.png"
-  source = "${path.module}/screenshots/tempproceed.png"
+  key    = "webhook.png"
+  source = "${path.module}/screenshots/webhook.png"
   content_type = "image/png"
-  tags   = filemd5("${path.module}/screenshots/tempproceed.png")
+
+  etag   = filemd5("${path.module}/screenshots/webhook.png")
 }
 
 resource "aws_s3_object" "s3jenkins" {
   bucket = aws_s3_bucket.public_jenkins_bucket.id
-  key    = "files/screenshots/s3jenkins.png"
+  key    = "s3jenkins.png"
   source = "${path.module}/screenshots/s3jenkins.png"
   content_type = "image/png"
-  tags   = filemd5("${path.module}/screenshots/s3jenkins.png")
+
+  etag   = filemd5("${path.module}/screenshots/s3jenkins.png")
 }
